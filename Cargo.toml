@@ -1,5 +1,5 @@
 [package]
-name = "Pegasus"
+name = "pegasus"
 version = "0.1.0"
 edition = "2018"
 
@@ -11,3 +11,4 @@ simulator = []
 webserver = []
 
 [dependencies]
+rand = "0.7"

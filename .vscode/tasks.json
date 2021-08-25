@@ -1,0 +1,191 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Pegaus build",
+            "type": "cargo",
+            "command": "build",
+            "args": [
+                "--bin",
+                "simulator"
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "dependsOn": [
+                "Pegasus format"
+            ],
+            "group": "build",
+        },
+        {
+            "label": "Pegaus check",
+            "type": "cargo",
+            "command": "check",
+            "args": [
+                "--bin",
+                "simulator"
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "dependsOn": [
+                "Pegasus format"
+            ],
+            "group": "build",
+        },
+        {
+            "label": "Pegasus format",
+            "type": "cargo",
+            "command": "fmt",
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "group": "build"
+        },
+        {
+            "label": "Pegaus run",
+            "type": "cargo",
+            "command": "run",
+            "args": [
+                "--bin",
+                "simulator"
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "dependsOn": [
+                "Pegasus format",
+                "Cell build"
+            ],
+            "group": "build",
+        },
+        {
+            "label": "Pegaus run Docker",
+            "type": "cargo",
+            "command": "run",
+            "args": [
+                "--bin",
+                "app_agent",
+                "--features",
+                "docker"
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "dependsOn": [
+                "Pegasus format",
+                "Client build container"
+            ],
+            "group": "build",
+        },
+        {
+            "label": "Pegaus doc",
+            "type": "cargo",
+            "command": "doc",
+            "args": [
+                "--bin",
+                "simulator"
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "group": "build",
+        },
+        {
+            "label": "Pegaus test",
+            "type": "cargo",
+            "command": "test",
+            "args": [
+                "--bin",
+                "simulator",
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "group": "build",
+        },
+        {
+            "label": "Client build container",
+            "type": "cargo",
+            "command": "build",
+            "args": [
+                "--bin",
+                "client",
+                "--target",
+                "x86_64-unknown-linux-musl",
+                "--features",
+                "docker"
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "group": "build",
+        },
+        {
+            "label": "Cell check",
+            "type": "cargo",
+            "command": "check",
+            "args": [
+                "--bin",
+                "cell"
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "group": "build",
+        },
+        {
+            "label": "Cell run",
+            "type": "cargo",
+            "command": "run",
+            "args": [
+                "--bin",
+                "cell",
+                "foobar"
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "group": "build",
+        },
+        {
+            "label": "Cell build",
+            "type": "cargo",
+            "command": "build",
+            "args": [
+                "--bin",
+                "cell"
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "group": "build",
+        },
+        {
+            "label": "Cell doc",
+            "type": "cargo",
+            "command": "doc",
+            "args": [
+                "--bin",
+                "cell"
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "group": "build",
+        },
+        {
+            "label": "Cell test",
+            "type": "cargo",
+            "command": "test",
+            "args": [
+                "--bin",
+                "cell"
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "group": "build",
+        },
+    ]
+}

@@ -7,13 +7,13 @@
 
 extern crate alloc;
 
-use core::fmt;
-use core::cell::RefCell;
 use alloc::boxed::Box;
+use alloc::collections::VecDeque;
 use alloc::rc::Rc;
 use alloc::rc::Weak;
 use alloc::vec::Vec;
-use alloc::collections::VecDeque;
+use core::cell::RefCell;
+use core::fmt;
 //use alloc::collections::BTreeMap;
 
 pub trait Behavior {
@@ -56,7 +56,7 @@ impl Event {
     fn new(target: &Rc<Actor>, message: Message) -> Event {
         Event {
             target: Rc::clone(target),
-            message: message
+            message: message,
         }
     }
 }
@@ -68,10 +68,10 @@ pub enum Message {
     Empty,
     Nat(usize),
     Int(isize),
-    Num(isize, isize, isize),  // num = int * base ^ exp
+    Num(isize, isize, isize), // num = int * base ^ exp
     Sym(&'static str),
-//    List(&'static [Message]),
-//    Struct(BTreeMap<String, Message>),
+    //    List(&'static [Message]),
+    //    Struct(BTreeMap<String, Message>),
     Pair(Box<Message>, Box<Message>),
     Addr(Rc<Actor>),
 }
@@ -130,7 +130,7 @@ impl Config {
         self.actors.push(Rc::downgrade(&actor));
         let event = Event::new(&actor, Message::Empty);
         self.events.push_back(event);
-        self.dispatch(1)  // dispatch bootstrap message
+        self.dispatch(1) // dispatch bootstrap message
     }
 
     /// Dispatch up to `limit` events.
@@ -151,17 +151,17 @@ impl Config {
                         if let Some(behavior) = effect.update.take() {
                             target.update(behavior);
                         }
-                    },
+                    }
                     Err(reason) => {
-                        println!("FAIL! {}", reason);  // FIXME: should deliver a signal to meta-controller
-                    },
+                        println!("FAIL! {}", reason); // FIXME: should deliver a signal to meta-controller
+                    }
                 }
             } else {
                 break;
             }
             limit -= 1;
         }
-        self.events.len()  // remaining event count
+        self.events.len() // remaining event count
     }
 }
 
@@ -180,7 +180,7 @@ pub mod idiom {
     pub struct Sink;
     impl Behavior for Sink {
         fn react(&self, _event: Event) -> Result<Effect, Error> {
-           Ok(Effect::new())
+            Ok(Effect::new())
         }
     }
     impl Sink {
@@ -236,10 +236,10 @@ pub mod idiom {
     impl Behavior for Label {
         fn react(&self, event: Event) -> Result<Effect, Error> {
             let mut effect = Effect::new();
-            effect.send(&self.cust, Message::Pair(
-                Box::new(self.label.clone()),
-                Box::new(event.message)
-            ));
+            effect.send(
+                &self.cust,
+                Message::Pair(Box::new(self.label.clone()), Box::new(event.message)),
+            );
             Ok(effect)
         }
     }
@@ -268,10 +268,13 @@ pub mod idiom {
     impl Behavior for Tag {
         fn react(&self, event: Event) -> Result<Effect, Error> {
             let mut effect = Effect::new();
-            effect.send(&self.cust, Message::Pair(
-                Box::new(Message::Addr(Rc::clone(&event.target))),
-                Box::new(event.message)
-            ));
+            effect.send(
+                &self.cust,
+                Message::Pair(
+                    Box::new(Message::Addr(Rc::clone(&event.target))),
+                    Box::new(event.message),
+                ),
+            );
             Ok(effect)
         }
     }
@@ -282,7 +285,6 @@ pub mod idiom {
             })
         }
     }
-
 }
 
 #[cfg(test)]
@@ -318,7 +320,7 @@ mod tests {
     fn once_behavior() {
         let sink = Actor::new(Box::new(idiom::Sink));
         let once = Actor::new(Box::new(Once {
-            cust: Rc::clone(&sink)
+            cust: Rc::clone(&sink),
         }));
 
         let event = Event::new(&once, Message::Empty);
@@ -346,7 +348,7 @@ mod tests {
                     let actor = effect.create(Box::new(idiom::Sink));
                     effect.send(&cust, Message::Addr(Rc::clone(&actor)));
                     Ok(effect)
-                },
+                }
                 _ => Err("unknown message"),
             }
         }

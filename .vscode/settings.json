@@ -1,0 +1,64 @@
+{
+    "workbench.colorTheme": "Quiet Light",
+    "launch": {
+        "configuration": [
+            "externalConsole"
+        ]
+    },
+    "[rust]": {
+        "editor.detectIndentation": true,
+        "editor.insertSpaces": true,
+        "editor.formatOnSave": true
+    },
+    "rust-analyzer.cargo.features": [],
+    "rust-analyzer.checkOnSave.command": "cargo check",
+    "rust-analyzer.checkOnSave.features": [],
+    "rust-analyzer.checkOnSave.enable": true,
+    "rust-analyzer.checkOnSave.allTargets": false,
+    "rust-analyzer.checkOnSave.target": "app_agent",
+    "rust-analyzer.checkOnSave.overrideCommand": [
+        "cargo",
+        "check",
+        "--bin",
+        "app_agent",
+        "--features",
+        "docker",
+        "--message-format=json"
+    ],
+    "rust-analyzer.callInfo.full": false,
+    "rust-analyzer.cargo.allFeatures": false,
+    "rust-analyzer.assist.importGranularity": "crate",
+    "rust-analyzer.trace.server": "verbose",
+    "rust-analyzer.trace.extension": true,
+    "rust-analyzer.diagnostics.enableExperimental": false,
+    //"rust-analyzer.inlayHints.maxLength": 5,
+    "terminal.integrated.scrollback": 10000,
+    "git.enableSmartCommit": true,
+    "workbench.statusBar.visible": true,
+    "workbench.activityBar.visible": true,
+    "editor.minimap.enabled": false,
+    "editor.showFoldingControls": "always",
+    "editor.acceptSuggestionOnCommitCharacter": true,
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.formatOnType": false,
+    "editor.formatOnSave": true,
+    "editor.tokenColorCustomizations": {
+        "comments": "#666666"
+    },
+    "workbench.panel.defaultLocation": "bottom",
+    "workbench.editor.enablePreview": false,
+    "screencastMode.onlyKeyboardShortcuts": true,
+    "workbench.sideBar.location": "left",
+    "workbench.colorCustomizations": {
+        "rust_analyzer.inlayHints.foreground": "#9C9C9C",
+    },
+    "workbench.editor.wrapTabs": false,
+    "todo-tree.tree.showScanModeButton": false,
+    "diffEditor.ignoreTrimWhitespace": false,
+    "errorLens.onSave": true,
+    "errorLens.exclude": [
+        "Unnecessary braces in use statement"
+    ],
+    "window.zoomLevel": 1,
+}
