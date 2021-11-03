@@ -61,18 +61,15 @@ fn select_cell<'a>(
 ) -> Vec<(u32, String)> {
     random_sleep("Chaos monkey", std::process::id());
     let mut msgs = Vec::new();
-    let mut count = 0;
     let mut fdset_rd = master_fds.clone();
     let mut fdset_err = FdSet::new();
-    println!("1: count {} \nfdset {:?}", count, fdset_rd);
+    println!("fdset before select {:?}", fdset_rd);
     match select(None, &mut fdset_rd, None, &mut fdset_err, None) {
         Ok(r) => println!("Success: {} fd ready", r),
         Err(e) => println!("Failure: {}\nfdset_rd {:?}", e, fdset_rd),
     }
-    println!("2: count {} \nfdset_rd {:?}", count, fdset_rd);
+    println!("fdset after select {:?}", fdset_rd);
     for fd_raw in fdset_rd.fds(None) {
-        count = count + 1;
-        println!("3: count {}, fd {}", count, fd_raw);
         let cell_info = from_cell_from_fd_raw
             .get_mut(&fd_raw)
             .expect("from_cell_fds error");
@@ -89,8 +86,7 @@ fn select_cell<'a>(
             },
             None => format!("Empty message"),
         };
-        println!("Message: {}", msg);
-        println!("4: count {}", count);
+        println!("Message on fd {}: {}", fd_raw, msg);
     }
     msgs
 }
