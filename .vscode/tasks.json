@@ -65,7 +65,7 @@
             "command": "run",
             "args": [
                 "--bin",
-                "app_agent",
+                "cell",
                 "--features",
                 "docker"
             ],

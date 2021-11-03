@@ -15,18 +15,19 @@
     "rust-analyzer.checkOnSave.features": [],
     "rust-analyzer.checkOnSave.enable": true,
     "rust-analyzer.checkOnSave.allTargets": false,
-    "rust-analyzer.checkOnSave.target": "app_agent",
+    "rust-analyzer.checkOnSave.target": "simulator",
     "rust-analyzer.checkOnSave.overrideCommand": [
         "cargo",
         "check",
         "--bin",
-        "app_agent",
+        "simulator",
         "--features",
         "docker",
         "--message-format=json"
     ],
     "rust-analyzer.callInfo.full": false,
     "rust-analyzer.cargo.allFeatures": false,
+    "rust-analyzer.checkOnSave.allFeatures": true,
     "rust-analyzer.assist.importGranularity": "crate",
     "rust-analyzer.trace.server": "verbose",
     "rust-analyzer.trace.extension": true,
@@ -42,6 +43,7 @@
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
     "editor.formatOnType": false,
+    "editor.defaultFormatter": "matklad.rust-analyzer",
     "editor.formatOnSave": true,
     "editor.tokenColorCustomizations": {
         "comments": "#666666"
@@ -54,11 +56,6 @@
         "rust_analyzer.inlayHints.foreground": "#9C9C9C",
     },
     "workbench.editor.wrapTabs": false,
-    "todo-tree.tree.showScanModeButton": false,
     "diffEditor.ignoreTrimWhitespace": false,
-    "errorLens.onSave": true,
-    "errorLens.exclude": [
-        "Unnecessary braces in use statement"
-    ],
     "window.zoomLevel": 1,
 }

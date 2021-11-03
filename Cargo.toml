@@ -1,14 +1,19 @@
 [package]
 name = "pegasus"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
+resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-api-old = []
-simulator = []
-webserver = []
+# api-old = []
+docker = []
+# simulator = []
+# webserver = []
 
 [dependencies]
+nix = "0.22.0"
+passfd = { git = "https://github.com/polachok/passfd", rev = "346302f" }
 rand = "0.7"
+readonly = "0.2"
