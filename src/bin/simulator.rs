@@ -14,7 +14,7 @@ mod tests {
     #[test]
     fn comm_test() {
         let test_msg = "test message\n";
-        let mut cell = Cell::new("Cell", None);
+        let mut cell = Cell::new("Cell", None, None);
         talk_to_cell(&mut cell, test_msg);
         let mut cells = vec![&mut cell];
         let msgs = listen_to_cells(&mut cells);
@@ -27,7 +27,7 @@ mod tests {
             .map(|cell| {
                 let pid = cell.pid;
                 println!("Simulator listening to cell with PID {}", pid);
-                let from_cell = &mut cell.from_cell;
+                let from_cell = &mut cell.chaos_from_cell;
                 let mut reader = BufReader::new(from_cell).lines();
                 reader
                     .next()

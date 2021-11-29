@@ -187,5 +187,19 @@
             ],
             "group": "build",
         },
+        {
+            "label": "Test Cell run",
+            "type": "cargo",
+            "command": "run",
+            "args": [
+                "--bin",
+                "test_cell",
+                "foobar"
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "group": "build",
+        },
     ]
 }

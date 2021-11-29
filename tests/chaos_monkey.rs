@@ -12,11 +12,11 @@ use pegasus::utility::{random_sleep, setup_fds, talk_to_cell};
 fn chaos_monkey_all_fds_ready() {
     let cell_id1 = "Cell:0";
     let cell_id2 = "Cell:1";
-    let mut cell1 = Cell::new(cell_id1, None);
-    let mut cell2 = Cell::new(cell_id2, None);
+    let mut cell1 = Cell::new(cell_id1, None, None);
+    let mut cell2 = Cell::new(cell_id2, None, None);
     // Needed to keep chaos monkey running to give cell a chance to finish
-    talk_to_cell(&mut cell1, "Hello 1\n");
-    talk_to_cell(&mut cell2, "Hello 2\n");
+    talk_to_cell(&mut cell1, Some("Hello 1\n"));
+    talk_to_cell(&mut cell2, Some("Hello 2\n"));
     std::thread::sleep(std::time::Duration::from_secs(3));
     let mut cells = vec![&mut cell1, &mut cell2];
     let (master_fds, mut from_cell_fds) = setup_fds(&mut cells);
@@ -34,14 +34,14 @@ fn chaos_monkey_all_fds_ready() {
 fn chaos_monkey_some_fds_ready() {
     let cell_id1 = "Cell:0";
     let cell_id2 = "Cell:1";
-    let mut cell1 = Cell::new(cell_id1, None);
-    let mut cell2 = Cell::new(cell_id2, None);
+    let mut cell1 = Cell::new(cell_id1, None, None);
+    let mut cell2 = Cell::new(cell_id2, None, None);
     // Needed to keep chaos monkey running to give cell a chance to finish
-    talk_to_cell(&mut cell1, "Hello 1\n");
+    talk_to_cell(&mut cell1, Some("Hello 1\n"));
     let mut cells = vec![&mut cell1, &mut cell2];
     let (master_fds, mut from_cell_fds) = setup_fds(&mut cells);
     let mut msgs = select_cell(&master_fds, &mut from_cell_fds);
-    talk_to_cell(&mut cell2, "Hello 2\n");
+    talk_to_cell(&mut cell2, Some("Hello 2\n"));
     std::thread::sleep(std::time::Duration::from_secs(3));
     let mut cells = vec![&mut cell1, &mut cell2];
     let (master_fds, mut from_cell_fds) = setup_fds(&mut cells);

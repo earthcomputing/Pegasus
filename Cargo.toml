@@ -17,3 +17,4 @@ nix = "0.22.0"
 passfd = { git = "https://github.com/polachok/passfd", rev = "346302f" }
 rand = "0.7"
 readonly = "0.2"
+users = "0.11.0"
