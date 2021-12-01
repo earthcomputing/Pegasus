@@ -15,8 +15,8 @@ fn chaos_monkey_all_fds_ready() {
     let mut cell1 = Cell::new(cell_id1, None, None);
     let mut cell2 = Cell::new(cell_id2, None, None);
     // Needed to keep chaos monkey running to give cell a chance to finish
-    talk_to_cell(&mut cell1, Some("Hello 1\n"));
-    talk_to_cell(&mut cell2, Some("Hello 2\n"));
+    talk_to_cell(&mut cell1, "Hello 1\n");
+    talk_to_cell(&mut cell2, "Hello 2\n");
     std::thread::sleep(std::time::Duration::from_secs(3));
     let mut cells = vec![&mut cell1, &mut cell2];
     let (master_fds, mut from_cell_fds) = setup_fds(&mut cells);

@@ -14,15 +14,15 @@ pub struct Cell {
     pub chaos_from_cell: ChildStdout,
 }
 impl Cell {
-    pub fn new(
+    pub fn new<'a>(
         cell_id: &'static str,
-        program_opt: Option<&str>,
-        stream_name_opt: Option<&PathBuf>,
+        program_opt: impl Into<Option<&'a str>>,
+        stream_name_opt: impl Into<Option<&'a PathBuf>>,
     ) -> Cell {
-        let program = program_opt.unwrap_or("target/debug/test_cell");
+        let program = program_opt.into().unwrap_or("target/debug/test_cell");
         let mut child = Command::new(program)
             .arg(cell_id)
-            .arg(stream_name_opt.unwrap_or(&PathBuf::from("")))
+            .arg(stream_name_opt.into().unwrap_or(&PathBuf::from("")))
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
@@ -46,7 +46,7 @@ impl Cell {
         }
     }
 }
-fn get_fds(stream_name: &PathBuf) -> Result<(File, File), Box<dyn std::error::Error>> {
+fn _get_fds(stream_name: &PathBuf) -> Result<(File, File), Box<dyn std::error::Error>> {
     let stream = UnixStream::connect(stream_name.clone())
         .expect(&format!("Can't connect to {:?}", stream_name));
     let fd_raw = stream.recv_fd().expect("Can't receive tx");

@@ -1,7 +1,7 @@
 use passfd::FdPassingExt;
 use pegasus::utility::{keep_alive, random_sleep};
 // use std::io::Read;
-use std::{cell, env::args, io::{BufRead, BufReader, Read, Write, stdin, stdout}, os::unix::{net::UnixStream, prelude::FromRawFd}, process};
+use std::{env::args, io::{BufRead, BufReader, Read, Write, stdin, stdout}, os::unix::{net::UnixStream, prelude::FromRawFd}, process};
 use users::get_current_username;
 
 fn main() {
@@ -14,7 +14,7 @@ fn main() {
     let stream_name = args.get(2);
     if let Some(stream_name) = stream_name {
         eprintln!("  {}: Connecting to stream {}", cell_id, stream_name);
-        let mut stream = UnixStream::connect(stream_name.clone())
+        let stream = UnixStream::connect(stream_name.clone())
             .expect(&format!("Can't connect to {}", stream_name));
         eprintln!("  {} Connected: Reading fds", cell_id);
         let tx_raw = stream.recv_fd().expect("Can't receive tx");
@@ -37,7 +37,7 @@ fn main() {
     keep_alive(&format!("  {} alive", cell_id));
     eprintln!("  Cell {} exiting", pid);
 }
-fn read_stream(stream: &mut UnixStream) -> [u8;100] {
+fn _read_stream(stream: &mut UnixStream) -> [u8;100] {
     let mut buf = [0;100];
     stream.read(&mut buf).expect("Can't read from stream");
     buf

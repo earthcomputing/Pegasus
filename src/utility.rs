@@ -21,8 +21,8 @@ pub fn random_sleep(who: &str, id: u32) {
     std::thread::sleep(std::time::Duration::from_millis(ms as u64));
     eprintln!("{} {} awake", who, id);
 }
-pub fn talk_to_cell(cell: &mut Cell, msg: Option<&str>) {
-    if let Some(msg) = msg {
+pub fn talk_to_cell<'a>(cell: &mut Cell, msg: impl Into<Option<&'a str>>) {
+    if let Some(msg) = msg.into() {
         cell.chaos_to_cell
             .write_all(msg.as_bytes())
             .expect("Cannot write to cell");
