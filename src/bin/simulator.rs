@@ -10,16 +10,19 @@ mod tests {
     };
 
     use pegasus::cell::Cell;
-    use pegasus::utility::talk_to_cell;
+    use pegasus::utility::{keep_alive ,talk_to_cell};
     #[test]
     fn comm_test() {
         let test_msg = "test message\n";
-        let mut cell = Cell::new("Cell", None, None);
+        let program_plus_args = ["cargo", "test", "--bin", "cell", "--test", "chaos_monkey"];
+        let mut cell = Cell::new("Cell", &program_plus_args, None);
         talk_to_cell(&mut cell, test_msg);
         let mut cells = vec![&mut cell];
         let msgs = listen_to_cells(&mut cells);
         println!("Simulator got {}", msgs[0]);
         assert_eq!(test_msg.trim(), &msgs[0]);
+        keep_alive("Enter anything to tell the simulator to exit");
+        println!("Simulator exiting");
     }
     fn listen_to_cells(cells: &mut [&mut Cell]) -> Vec<String> {
         cells

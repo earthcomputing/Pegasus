@@ -16,13 +16,14 @@ pub struct Cell {
 impl Cell {
     pub fn new<'a>(
         cell_id: &'static str,
-        program_opt: impl Into<Option<&'a str>>,
+        program_plus_args: &[&str],
         stream_name_opt: impl Into<Option<&'a PathBuf>>,
     ) -> Cell {
-        let program = program_opt.into().unwrap_or("target/debug/test_cell");
-        let mut child = Command::new(program)
+        let program = program_plus_args[0];
+         let mut child = Command::new(program)
+            .args(&program_plus_args[1..])
             .arg(cell_id)
-            .arg(stream_name_opt.into().unwrap_or(&PathBuf::from("")))
+            .arg(stream_name_opt.into().unwrap_or(&PathBuf::from(" ")))
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
@@ -37,7 +38,7 @@ impl Cell {
             .stdout
             .take()
             .expect(&format!("Can't get stdin for {}", cell_id));
-        
+
         Cell {
             pid: child_id,
             process: child,

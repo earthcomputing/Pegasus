@@ -1,4 +1,4 @@
-use nix::sys::select::FdSet;
+use nix::sys::select::{select, FdSet};
 use nix::unistd::{pipe, unlink};
 use passfd::FdPassingExt;
 use rand::prelude::*;
@@ -6,6 +6,7 @@ use std::{
     collections::HashMap,
     fs::File,
     io::Write,
+    io::{BufRead, BufReader},
     os::unix::{
         net::UnixListener,
         prelude::{AsRawFd, FromRawFd},
@@ -31,8 +32,9 @@ pub fn talk_to_cell<'a>(cell: &mut Cell, msg: impl Into<Option<&'a str>>) {
 }
 pub fn keep_alive(msg: &str) {
     println!("{}", msg);
-    let mut buf = String::new();
-    let _ = std::io::stdin().read_line(&mut buf);
+    //let mut buf = String::new();
+    //let _ = std::io::stdin().read_line(&mut buf);
+    std::thread::sleep(std::time::Duration::from_secs(5));
 }
 pub fn setup_fds<'a>(
     cells: &'a mut Vec<&'a mut Cell>,
@@ -77,4 +79,36 @@ pub fn pipes(socket_name: &str) -> Result<(File, File), Box<dyn std::error::Erro
     let to_client = unsafe { File::from_raw_fd(to_left) };
     let from_client = unsafe { File::from_raw_fd(from_left) };
     Ok((to_client, from_client))
+}
+pub fn select_cell<'a>(
+    master_fds: &FdSet,
+    from_cell_from_fd_raw: &mut HashMap<i32, (u32, &'a mut ChildStdout)>,
+) -> Result<Vec<(u32, String)>, String> {
+    let mut msgs = Vec::new();
+    let mut fdset_rd = master_fds.clone();
+    let mut fdset_err = FdSet::new();
+    match select(None, &mut fdset_rd, None, &mut fdset_err, None) {
+        Ok(r) => println!("Success: {} fds ready", r),
+        Err(e) => println!("Failure: {}\nfdset_rd {:?}", e, fdset_rd),
+    }
+    select(None, &mut fdset_rd, None, &mut fdset_err, None).expect("Select problem");
+    for fd_raw in fdset_rd.fds(None) {
+        let cell_info = from_cell_from_fd_raw
+            .get_mut(&fd_raw)
+            .expect("from_cell_fds error");
+        let cell_pid = cell_info.0;
+        let fd = &mut *cell_info.1;
+        let mut reader = BufReader::new(fd).lines();
+        match reader.next() {
+            Some(m) => match m {
+                Ok(msg) => {
+                    msgs.push((cell_pid, msg.clone()));
+                    msg
+                }
+                Err(e) => return Err(format!("Read error {}", e)),
+            },
+            None => return Err("Empty message".to_owned()),
+        };
+    }
+    Ok(msgs)
 }
