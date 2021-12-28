@@ -1,4 +1,5 @@
 use std::fs::File;
+use std::os::unix::prelude::RawFd;
 use std::{
     os::unix::{net::UnixStream, prelude::FromRawFd},
     path::PathBuf,
@@ -10,40 +11,47 @@ use passfd::FdPassingExt;
 pub struct Cell {
     pub pid: u32,
     pub process: Child,
-    pub chaos_to_cell: ChildStdin,
-    pub chaos_from_cell: ChildStdout,
+    pub cell_stdin: ChildStdin,
+    pub cell_stdout: ChildStdout,
+    pub chaos_to_cell: File,
+    pub chaos_from_cell: File
 }
 impl Cell {
     pub fn new<'a>(
         cell_id: &'static str,
+        chaos_to_cell_raw: RawFd,
+        chaos_from_cell_raw: RawFd,
         program_plus_args: &[&str],
-        stream_name_opt: impl Into<Option<&'a PathBuf>>,
+        stream_name: &'a PathBuf,
     ) -> Cell {
         let program = program_plus_args[0];
          let mut child = Command::new(program)
             .args(&program_plus_args[1..])
             .arg(cell_id)
-            .arg(stream_name_opt.into().unwrap_or(&PathBuf::from(" ")))
+            .arg(stream_name)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
             .expect("Could not spawn cell");
         let child_id = child.id();
         println!("{} has PID {}", cell_id, child.id());
-        let from_chaos_monkey = child
+        let cell_stdin = child
             .stdin
             .take()
             .expect(&format!("Can't get stdout for {}", cell_id));
-        let to_chaos_monkey = child
+        let cell_stdout = child
             .stdout
             .take()
             .expect(&format!("Can't get stdin for {}", cell_id));
-
+        let chaos_to_cell = unsafe { std::fs::File::from_raw_fd(chaos_to_cell_raw) };
+        let chaos_from_cell = unsafe { std::fs::File::from_raw_fd(chaos_from_cell_raw) };
         Cell {
             pid: child_id,
             process: child,
-            chaos_to_cell: from_chaos_monkey,
-            chaos_from_cell: to_chaos_monkey,
+            cell_stdin,
+            cell_stdout,
+            chaos_to_cell,
+            chaos_from_cell
         }
     }
 }

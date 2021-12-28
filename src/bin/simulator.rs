@@ -30,7 +30,7 @@ mod tests {
             .map(|cell| {
                 let pid = cell.pid;
                 println!("Simulator listening to cell with PID {}", pid);
-                let from_cell = &mut cell.chaos_from_cell;
+                let from_cell = &mut cell.cell_stdout;
                 let mut reader = BufReader::new(from_cell).lines();
                 reader
                     .next()
