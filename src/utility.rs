@@ -35,7 +35,7 @@ pub fn talk_to_cell<'a>(pid: u32, tx_raw: RawFd, msg: impl Into<Option<&'a str>>
 pub fn keep_alive(duration: Option<std::time::Duration>, msg: &str) {
     match duration {
         Some(d) => {
-            eprintln!("Waiting {:?} {}", d, msg);
+            eprintln!("{} {:?}", msg, d);
             std::thread::sleep(d);
         }, 
         None => {
@@ -52,7 +52,6 @@ pub fn setup_fds<'a>(
     let mut from_fds = HashMap::new();
     for (pid, from_cell) in cell_rxs.iter() {
         let from_cell_raw = from_cell.as_raw_fd();
-        println!("Insert fd {}", from_cell_raw); 
         from_fds.insert(from_cell_raw, (*pid, *from_cell));
         master_fds.insert(from_cell_raw);
     }
@@ -67,15 +66,14 @@ pub fn setup_fds_test<'a>(
         let pid = cell_info.0;
         let from_cell = &mut *cell_info.1;
         let from_cell_raw = from_cell.as_raw_fd();
-         println!("Insert fd {}", from_cell_raw);
         from_cell_fds.insert(from_cell_raw, (pid, from_cell));
         master_fds.insert(from_cell_raw);
     }
     (master_fds, from_cell_fds)
 }
 pub fn pipe_pair() -> Result<[i32; 4], Box<dyn std::error::Error>> {
-    let (from_left, to_rite) = pipe().expect("Can't create pipe 1");
-    let (from_rite, to_left) = pipe().expect("Can't create pipe 2");
+    let (from_left, to_rite) = pipe().expect("--> Can't create pipe 1");
+    let (from_rite, to_left) = pipe().expect("--> Can't create pipe 2");
     Ok([from_left, to_rite, from_rite, to_left])
 }
 pub fn send_fds(socket_name: &str, tx: i32, rx: i32) -> Result<(), Box<dyn std::error::Error>> {
@@ -83,8 +81,8 @@ pub fn send_fds(socket_name: &str, tx: i32, rx: i32) -> Result<(), Box<dyn std::
     socket_path.push(socket_name);
     let listener = UnixListener::bind(socket_path).expect("Can't bind socket");
     let (stream, _) = listener.accept().expect("Can't accept socket");
-    stream.send_fd(tx).expect("Can't send tx");
-    stream.send_fd(rx).expect("Can't send rx");
+    stream.send_fd(tx)?;
+    stream.send_fd(rx)?;
     Ok(())
 }
 pub fn pipes(socket_name: &str) -> Result<(File, File), Box<dyn std::error::Error>> {
@@ -111,8 +109,8 @@ pub fn select_cell(
     let mut fdset_rd = master_fds.clone();
     let mut fdset_err = FdSet::new();
     match select(None, &mut fdset_rd, None, &mut fdset_err, None) {
-        Ok(r) => println!("Success: {} fds ready", r),
-        Err(e) => println!("Failure: {}\nfdset_rd {:?}", e, fdset_rd),
+        Ok(r) => println!("{} fds ready", r),
+        Err(e) => println!("--> Failure: {}\nfdset_rd {:?}", e, fdset_rd),
     }
     select(None, &mut fdset_rd, None, &mut fdset_err, None).expect("Select problem");
     for fd_raw in fdset_rd.fds(None) {
@@ -123,8 +121,11 @@ pub fn select_cell(
         let mut reader = BufReader::new(cell_info.1).lines();
         match reader.next() {
             Some(m) => match m {
-                Ok(msg) => msgs.push((cell_pid, msg)),
-                Err(e) => return Err(format!("Read error {}", e)),
+                Ok(msg) => {
+                    println!("Select got |{}|", msg);
+                    msgs.push((cell_pid, msg))
+                },
+                Err(e) => return Err(format!("--> Read error {}", e)),
             },
             None => {} // return Err("Empty message".to_owned()),
         };
@@ -140,8 +141,8 @@ pub fn select_cell_test<'a>(
     let mut fdset_rd = master_fds.clone();
     let mut fdset_err = FdSet::new();
     match select(None, &mut fdset_rd, None, &mut fdset_err, None) {
-        Ok(r) => println!("Success: {} fds ready", r),
-        Err(e) => println!("Failure: {}\nfdset_rd {:?}", e, fdset_rd),
+        Ok(r) => println!("{} fds ready", r),
+        Err(e) => println!("--> Failure: {}\nfdset_rd {:?}", e, fdset_rd),
     }
     select(None, &mut fdset_rd, None, &mut fdset_err, None).expect("Select problem");
     for fd_raw in fdset_rd.fds(None) {
@@ -153,8 +154,11 @@ pub fn select_cell_test<'a>(
         let mut reader = BufReader::new(from_cell).lines();
         match reader.next() {
             Some(m) => match m {
-                Ok(msg) => msgs.push((cell_pid, msg)),
-                Err(e) => return Err(format!("Read error {}", e)),
+                Ok(msg) => {
+                    println!("Select got |{}|", msg);
+                    msgs.push((cell_pid, msg))
+                },
+               Err(e) => return Err(format!("--> Read error {}", e)),
             },
             None => {} // return Err("Empty message".to_owned()),
         };
@@ -163,27 +167,28 @@ pub fn select_cell_test<'a>(
 }
 pub fn share_stream(
     cell_name: &str,
-    rx_raw: i32,
-    tx_raw: i32,
+    from_cell_raw: i32,
+    to_cell_raw: i32,
 ) -> Result<PathBuf, Box<dyn std::error::Error>> {
     let mut socket_name = PathBuf::from("/tmp/test");
     socket_name.push(cell_name);
     let socket_name_clone = socket_name.clone();
+    let cell_name_clone = cell_name.to_owned();
     std::thread::spawn( move || {
         let _ = unlink(&socket_name); // Unlink file if it already exists
         println!("Listening on stream {}", &socket_name.to_str().unwrap());
         let listener = UnixListener::bind(&socket_name.clone())
-            .expect(&format!("Can't bind socket: {:?}", socket_name));
-        let (stream, addr) = listener.accept().expect("Can't accept on socket");
+            .expect(&format!("--> Can't bind socket: {:?}", socket_name));
+        let (stream, _addr) = listener.accept().expect("--> Can't accept on socket");
         println!(
-            "Sending pipe handles on stream {} at addr {:?} rx {} tx {}",
+            "Sending pipe handles on stream {} from_cell {} to_cell {}",
             socket_name.to_str().unwrap(),
-            addr,
-            rx_raw,
-            tx_raw
+            from_cell_raw,
+            to_cell_raw
         );
-        stream.send_fd(tx_raw).expect("Can't send tx to_server");
-        stream.send_fd(rx_raw).expect("Can't send rx from_server");
+        // Do not change the order of the next two lines
+        let _ = stream.send_fd(to_cell_raw).map_err(|e| println!("--> Can't send to_cell {} to {}: {}", to_cell_raw, cell_name_clone, e));
+        let _ = stream.send_fd(from_cell_raw).map_err(|e| println!("--> Can't send from_cell {} to {}: {}", from_cell_raw, cell_name_clone, e));
         keep_alive(None, &format!(
             "Keep stream {} alive",
             socket_name.to_str().unwrap()

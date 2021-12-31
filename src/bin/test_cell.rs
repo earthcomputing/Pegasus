@@ -31,7 +31,7 @@ fn main() {
     match reader.next() {
         Some(m) => match m {
             Ok(m) => eprintln!("  Cell {} got msg from chaos monkey {}", pid, m),
-            Err(e) => eprintln!("  Cell {} got error from chaos monkey {}", pid, e),
+            Err(e) => eprintln!("  --> Cell {} got error from chaos monkey {}", pid, e),
         },
         None => eprintln!("  Cell {} got no message from chaos monkey", pid),
     }

@@ -8,7 +8,11 @@ use users::get_current_username;
 fn main() {
     let (cell_id, pid, stream_name) = process_args(0).expect("Can't process args");
     eprintln!("cell_id {}, pid {}, stream_name {:?}", cell_id, pid, stream_name);
-    talk_to_chaos_monkey(&cell_id, pid, stream_name.expect("No stream name"));
+    if let Err(e) = talk_to_chaos_monkey(&cell_id, pid, stream_name.expect("No stream name")){
+        eprintln!("  --> {} error {}", cell_id, e);
+    } else {
+        eprintln!("  Cell {} exiting", pid);
+    };
 }
 fn process_args(skip: usize) -> Result<(String, u32, Option<String>), Box<dyn std::error::Error>> {
     let pid = std::process::id();
@@ -20,37 +24,47 @@ fn process_args(skip: usize) -> Result<(String, u32, Option<String>), Box<dyn st
     eprintln!("  {} starting with PID {} as user {:?}", cell_id, pid, user);
     Ok((cell_id.clone(), pid, stream_name))
 }
-fn talk_to_chaos_monkey(cell_id: &str, pid: u32, stream_name: String) {
-    eprintln!("  Hello from {}", cell_id);
-    eprintln!("  {}: Connecting to stream {}", cell_id, stream_name);
+fn talk_to_chaos_monkey(cell_id: &str, pid: u32, stream_name: String) -> Result<(), Box<dyn std::error::Error>>{
+    eprintln!("  {} starting", cell_id);
+    eprintln!("  {} connecting to stream {}", cell_id, stream_name);
     let stream = std::os::unix::net::UnixStream::connect(stream_name.clone())
         .expect(&format!("Can't connect to {}", stream_name));
     eprintln!("  {} Connected: Reading fds", cell_id);
-    let tx_raw = stream.recv_fd().expect("Can't receive tx");
-    let rx_raw = stream.recv_fd().expect("Can't receive rx");
-    eprintln!(
-        "  {}: Got tx/rx {}/{} for other cell {:?}",
-        cell_id, tx_raw, rx_raw, stream_name
-    );
-    let from_chaos_monkey = unsafe { std::fs::File::from_raw_fd(rx_raw) };
-    let mut reader = BufReader::new(from_chaos_monkey).lines();
-    random_sleep("  Cell", process::id());
-    eprintln!("  Cell {} listening to chaos monkey", pid);
-    let msg = reader
-        .next()
-        .or(Some(Ok("No msg from chaos monkey".to_owned())))
-        .unwrap()
-        .expect("Cannot read from chaos monkey");
-    eprintln!("  Cell {} sending to chaos monkey {}", pid, msg);
-    // let msg = msg + "\n";
-    let buf = msg.as_bytes(); 
-    let mut to_chaos_monkey = unsafe { std::fs::File::from_raw_fd(tx_raw) };
-    to_chaos_monkey
-        .write_all(buf)
-        .expect("Cannot write to chaos monkey");
-    keep_alive(Some(std::time::Duration::from_secs(2)), "Sleeping 10 seconds");
+    match stream.recv_fd() {
+        Ok(from_chaos_monkey_raw) => { 
+            eprintln!("  {}: Got from_chaos_monkey {}", cell_id, from_chaos_monkey_raw);
+            let from_chaos_monkey = unsafe { std::fs::File::from_raw_fd(from_chaos_monkey_raw) };
+            let mut reader = BufReader::new(from_chaos_monkey).lines();
+            random_sleep("  Cell", process::id());
+            eprintln!("  Cell {} listening to chaos monkey", pid);
+            let msg = reader
+                .next()
+                .or(Some(Ok("No msg from chaos monkey".to_owned())))
+                .unwrap()
+                .expect("Cannot read from chaos monkey");
+                eprintln!("  Cell {} sending to chaos monkey {}", pid, msg);
+
+            match stream.recv_fd() { 
+                Ok(to_chaos_monkey_raw) => {      
+                    // let msg = msg + "\n";
+                    let buf = msg.as_bytes(); 
+                    let mut to_chaos_monkey = unsafe { std::fs::File::from_raw_fd(to_chaos_monkey_raw) };
+                    to_chaos_monkey
+                        .write_all(buf)
+                        .expect("Cannot write to chaos monkey");
+                }, 
+                Err(e) => {
+                    eprintln!("  --> {} can't read tx: {}", cell_id, e);
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("  --> {} can't read rx: {}", cell_id, e);
+        }
+    }
+    keep_alive(Some(std::time::Duration::from_secs(2)), "Sleeping");
     // assert!(false); // Test for failed test
-    eprintln!("  Cell {} exiting", pid);
+    Ok(())
 }
 #[cfg(test)]
 mod tests {
@@ -68,8 +82,12 @@ mod tests {
 fn chaos_monkey() {
     eprintln!("  Test chaos_monkey");
     let (cell_id, pid, stream_name) = process_args(2).expect("Can't process args");
-    talk_to_chaos_monkey(&cell_id, pid, stream_name.expect("No stream name"));
- }
+    if let Err(e) = talk_to_chaos_monkey(&cell_id, pid, stream_name.expect("No stream name")){
+        eprintln!("  --> {} error {}", cell_id, e);
+    } else {
+        eprintln!("  Cell {} exiting", pid);
+    };
+}
 #[test]
 fn cell2cell() {
     eprintln!("  Test cell2cell");

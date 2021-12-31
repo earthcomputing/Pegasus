@@ -11,8 +11,8 @@ fn chaos_monkey_all_fds_ready() {
     let cell_id2 = "Cell:1";
     let (from_cell1_raw, to_cell1_raw) = pipe().expect("Can't create pipe 1");
     let (from_cell2_raw, to_cell2_raw) = pipe().expect("Can't create pipe 2");
-    let socket_name1 = share_stream("cell1", from_cell2_raw, to_cell2_raw).expect("Can't share stream1");
-    let socket_name2 = share_stream("cell2", from_cell1_raw, to_cell1_raw).expect("Can't share stream2");
+    let socket_name1 = share_stream("cell1", from_cell1_raw, to_cell1_raw).expect("Can't share stream1");
+    let socket_name2 = share_stream("cell2", from_cell2_raw, to_cell2_raw).expect("Can't share stream2");
     let program_plus_args = ["cargo", "test", "chaos_monkey", "--bin", "cell", "--", "--nocapture"];
     let mut cell1 = Cell::new(cell_id1, to_cell1_raw, from_cell1_raw, &program_plus_args, &socket_name1);
     let mut cell2 = Cell::new(cell_id2, to_cell2_raw, from_cell2_raw, &program_plus_args, &socket_name2);
@@ -41,15 +41,14 @@ fn chaos_monkey_all_fds_ready() {
         (cell1.pid, &mut cell1.cell_stdout), 
         (cell2.pid, &mut cell2.cell_stdout)
     ];
-    // Get empty message from test harness
     let (master_fds, mut from_cell_fds) = setup_fds_test(&mut cell_rxs);
     let test_results = select_cell_test(&master_fds, &mut from_cell_fds).expect("Select error");
     for (cell_pid, test_result) in &test_results {
         found.push(test_result);
-        assert_eq!(test_result, "test tests::chaos_monkey ... ok");
         println!("{}: {}", cell_pid, test_result);
     }
-    expected.sort();
+    println!("Expected {:?}", expected);
+    expected.sort(); 
     found.sort();
     assert_eq!(expected, found);
     keep_alive(Some(std::time::Duration::from_secs(5)), "Waiting for cells");
